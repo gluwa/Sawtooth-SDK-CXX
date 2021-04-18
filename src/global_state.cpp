@@ -166,7 +166,7 @@ void GlobalStateImpl::GetBlockById(const std::string& block_id, BlockInfo* heade
 
     if (response.status() != ClientBlockGetResponse::OK) {
         std::stringstream error;
-        error << "Failed to retrieve block by ID";
+        error << "Failed to retrieve block by ID" << response.status();
         throw sawtooth::InvalidTransaction(error.str());
     }
 
@@ -195,7 +195,7 @@ void GlobalStateImpl::GetRewardBlockSignatures(const std::string& block_id, std:
 
     if (response.status() != ClientRewardBlockListResponse::OK) {
         std::stringstream error;
-        error << "Failed to retrieve Reward Block List";
+        error << "Failed to retrieve Reward Block List " << response.status();
 
         throw sawtooth::InvalidTransaction(error.str());
     }
