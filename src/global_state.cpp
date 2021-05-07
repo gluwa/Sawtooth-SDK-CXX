@@ -107,6 +107,8 @@ void GlobalStateImpl::GetStatesByPrefix(const std::string& address, std::string*
 
     if (response.status() == ClientStateListResponse::NO_RESOURCE) {
         out_values->resize(0);
+        start->clear();
+        root->clear();
         return;
     }
 
