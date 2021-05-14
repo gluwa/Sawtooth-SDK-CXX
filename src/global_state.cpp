@@ -99,6 +99,7 @@ void GlobalStateImpl::GetStatesByPrefix(const std::string& address, std::string*
 
     request.set_state_root(*root);
     request.mutable_paging()->set_start(*start);
+    request.mutable_paging()->set_limit(::google::protobuf::int32(100));
     request.set_address(address);
 
     FutureMessagePtr future = this->message_stream->SendMessage(
