@@ -18,7 +18,7 @@
 
 # -------------=== cxx sdk build ===-------------
 
-FROM ubuntu:xenial as cxx-sdk-builder
+FROM ubuntu:xenial-20210114 as cxx-sdk-builder
 
 ENV VERSION=AUTO_STRICT
 
@@ -70,7 +70,7 @@ RUN cd /project/ \
 
 # -------------=== cxx sdk docker build ===-------------
 
-FROM ubuntu:xenial
+FROM ubuntu:xenial-20210114
 
 COPY --from=cxx-sdk-builder /project/build/sawtooth-cxx-sdk-*.deb /tmp
 
