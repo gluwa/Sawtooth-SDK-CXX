@@ -28,7 +28,7 @@
 #   $ cd sawtooth-sdk-cxx
 #   $ docker run -v $(pwd):/project/sawtooth-sdk-cxx sawtooth-sdk-cxx-local
 
-FROM ubuntu:xenial
+FROM ubuntu:xenial-20210416
 
 RUN echo "deb [arch=amd64] http://repo.sawtooth.me/ubuntu/ci xenial universe" >> /etc/apt/sources.list \
  && (apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8AA7AF1F1091A5FD \
