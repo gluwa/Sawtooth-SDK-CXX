@@ -35,27 +35,27 @@ namespace sawtooth {
 static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger
     ("sawtooth.TransactionProcessor"));
 
-static int s_interrupted = 0;
+static bool s_interrupted = false;
 static bool s_interrupt_initialized = false;
 
 static void s_signal_handler (int signal_value) {
-    s_interrupted = 1;
     LOG4CXX_ERROR(logger, "signal interrupt received");
+    //force exit on second interrupt
+    if(s_interrupted) exit(EXIT_SUCCESS);
+    s_interrupted = true;
 }
 
 static void s_catch_signals (void) {
     if (!s_interrupt_initialized) {
-        //struct sigaction action;
-        //action.sa_handler = s_signal_handler;
-        //action.sa_flags = 0;
-        //sigemptyset (&action.sa_mask);
-        //sigaction (SIGINT, &action, NULL);
-        //sigaction (SIGTERM, &action, NULL);
-        signal(SIGINT, &s_signal_handler);
-        signal(SIGTERM, &s_signal_handler);
+        struct sigaction action;
+        action.sa_handler = s_signal_handler;
+        action.sa_flags = 0;
+        sigemptyset (&action.sa_mask);
+        sigaction (SIGINT, &action, NULL);
+        sigaction (SIGTERM, &action, NULL);
         s_interrupt_initialized = true;
 
-        LOG4CXX_ERROR(logger, "signal handler initialized");
+        LOG4CXX_DEBUG(logger, "signal handler initialized");
     } else {
         LOG4CXX_ERROR(logger, "signal handler already initialized");
     }
@@ -203,6 +203,7 @@ void TransactionProcessorImpl::HandleProcessingRequest(const void* msg,
 }
 
 void TransactionProcessorImpl::Run() {
+    bool server_is_connected = false;
     try {
         this->response_stream = this->message_dispatcher.CreateStream();
         zmqpp::socket socket(this->message_dispatcher.context(), zmqpp::socket_type::dealer);
@@ -219,9 +220,7 @@ void TransactionProcessorImpl::Run() {
             "Connect to: " << this->connection_string);
         this->message_dispatcher.Connect(this->connection_string);
 
-        bool server_is_connected = false;
-
-        while (this->run) {
+        while (this->run && !s_interrupted) {
             zmqpp::message zmsg;
             socket.receive(zmsg);
 
@@ -268,8 +267,10 @@ void TransactionProcessorImpl::Run() {
         LOG4CXX_ERROR(logger, "TransactionProcessor::Run ERROR: " << e.what());
     }
 
-    LOG4CXX_INFO(logger, "Unregister TP");
-    this->UnRegister();
+    if (server_is_connected) {
+        LOG4CXX_INFO(logger, "Unregister TP");
+        this->UnRegister();
+    }
 
     LOG4CXX_INFO(logger, "Close message dispatcher");
     this->message_dispatcher.Close();

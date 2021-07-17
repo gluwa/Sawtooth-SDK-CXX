@@ -91,13 +91,15 @@ void GlobalStateImpl::GetState(
     }
 }
 
-void GlobalStateImpl::GetStatesByPrefix(const std::string& address, std::string* root, std::vector<KeyValue>* out_values) const {
+void GlobalStateImpl::GetStatesByPrefix(const std::string& address, std::string* root, std::string* start, std::vector<KeyValue>* out_values) const {
     assert(out_values != nullptr && out_values->size() == 0);
 
     ClientStateListRequest request;
     ClientStateListResponse response;
 
-    request.set_state_root(root->empty()? "": root->c_str());
+    request.set_state_root(*root);
+    request.mutable_paging()->set_start(*start);
+    request.mutable_paging()->set_limit(::google::protobuf::int32(100));
     request.set_address(address);
 
     FutureMessagePtr future = this->message_stream->SendMessage(
@@ -106,16 +108,19 @@ void GlobalStateImpl::GetStatesByPrefix(const std::string& address, std::string*
 
     if (response.status() == ClientStateListResponse::NO_RESOURCE) {
         out_values->resize(0);
+        start->clear();
+        root->clear();
         return;
     }
 
     if (response.status() != ClientStateListResponse::OK) {
         std::stringstream error;
-        error << "Failed to retrieve states by prefix";
+        error << "Failed to retrieve states by prefix " << response.status();
         throw sawtooth::InvalidTransaction(error.str());
     }
 
-    *root = response.paging().next();
+    *root = response.state_root();
+    *start = response.paging().next();
     int num = response.entries_size();
     out_values->resize(num);
 
